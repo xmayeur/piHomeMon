@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div id="deviceMenuDiv" class="grid active device" style="margin-left: 20px; ">
+    <div class="row">
+        {% for n in nodes %}
+
+        <div class="col-md-2 col-xs-6 bottom-aligner">
+
+            <h3>{{ n['name'] }}</h3>
+            {% if n['state'] == 0 %}
+            <img class="active" src="{{ url_for('static', filename = 'unknown.png')}}"
+                 alt="{{ n['name'] }}"
+                 style="width:70px; display: inline;">
+            {% else %}
+            <img class="active" src="{{ url_for('static', filename = n['type']+states[n['state']]+'.png')}}"
+                 alt="{{ n['name'] }}"
+                 style="width:80px; ">
+            {% endif %}
+            <br>
+        </div>
+
+        {% endfor %}
+    </div>
+</div>
+
+
+<div id="webCamMenuDiv" style="display: none;">
+
+    <h1>Under contruction</h1>
+
+</div>
+
+
+<div id="logMenuDiv" style="display: none;">
+
+    <h1>Under contruction...</h1>
+
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/appscript.js') }}"></script>
+{% endblock %}
