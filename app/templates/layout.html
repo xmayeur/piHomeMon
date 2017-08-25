@@ -9,7 +9,7 @@
 
     <!-- Bootstrap -->
     <link href="{{ url_for('static', filename = 'css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename = 'css/row.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename = 'css/app.css') }}" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -65,6 +65,9 @@
     </div><!-- /.container-fluid -->
 </nav>
 
+<div id="spinner" class="spinner" style="display:none;">
+    <img id="img-spinner" src="{{ url_for('static', filename = 'spinner.gif') }}" alt="Loading"/>
+</div>
 
 {% block body %} {% endblock %}
 <!--

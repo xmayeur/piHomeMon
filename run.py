@@ -27,7 +27,4 @@ for arg in sys.argv[1:]:
     if arg == '-d' or arg == '--debug':
         debug = True
 
-certfile = 'home.mayeur.be-chain.pem'
-keyfile = 'home.mayeur.be.key'
-context = (certfile, keyfile)
-socketio.run(app, host='0.0.0.0', port=5000, debug=debug)  # , certfile=certfile, keyfile=keyfile)
+socketio.run(app, host='0.0.0.0', port=5000, debug=debug)

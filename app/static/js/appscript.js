@@ -10,11 +10,25 @@ $(document).ready(function () {
         // handle refresh response
         socket.on('refreshResponse', function(msg) {
             $('img[alt="'+msg.alt+'"]').attr('src', msg.pict);
+
         });
 
         // handle click on node's image
         $('div.device img').click(function(){
-            socket.emit('clickEvent', {name: $(this).attr('alt')});
+
+            if ( $(this).hasClass('active') ) {
+                socket.emit('clickEvent', {name: $(this).attr('alt')});
+                $(this).removeClass('active').addClass('busy');
+                $("#spinner").show();
+            }
+
         });
 
+        // re-activate clickable icon
+        socket.on('reactivateImg', function(msg) {
+            $('img[alt="'+msg.alt+'"]').removeClass('busy').addClass('active');
+            $("#spinner").hide();
+        });
+
+        // spinner show/hide here
 });

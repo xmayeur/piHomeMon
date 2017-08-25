@@ -1,0 +1,42 @@
+.row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display:         flex;
+  flex-wrap: wrap;
+
+}
+.row > [class*='col-'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-aligner {
+  display: inline-block;
+  vertical-align: bottom;
+
+}
+
+img.busy:hover {
+  border: 3px solid red;
+}
+img {
+  border: 3px solid white;
+}
+
+img.active:hover {
+    border: 3px solid green;
+}
+
+.spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-left: -50px; /* half width of the spinner gif */
+    margin-top: -50px; /* half height of the spinner gif */
+    text-align:center;
+    z-index:1234;
+    overflow: auto;
+    width: 100px; /* width of the spinner gif */
+    height: 102px; /*hight of the spinner gif +2px to fix IE8 issue */
+}

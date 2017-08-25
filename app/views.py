@@ -42,24 +42,34 @@ states[1024] = 'SHUT'
 
 def update_nodes(_nodes, _devices):
     for n in _nodes:
-        for d in _devices:
-            if n['device'] == d['id']:
-                if d['state'] == tdtool.TELLSTICK_TURNOFF:
-                    n['state'] = d['state']
-                else:
-                    # need more details of node state - need to probe node according to type
-                    n['state'] = d['state']
-                break
+        if n['device'] != '':
+            for d in _devices:
+                if n['device'] == d['id']:
+                    if d['state'] == tdtool.TELLSTICK_TURNOFF:
+                        n['state'] = d['state']
+                    else:
+                        # need more details of node state - need to probe node according to type
+                        if n['type'] == 'kodi':
+                            n['state'] = getKodiState(n)
+                            if n['state'] == methods['OFF']:
+                                # kodi seems off but device is on
+                                n['state'] = methods['UNKNOWN']
+                        else:
+                            n['state'] = d['state']
+                    break
+        else:
+            # need more details of node state - need to probe node according to type
+            if n['type'] == 'kodi':
+                n['state'] = getKodiState(n)
             else:
-                # need more details of node state - need to probe node according to type
                 n['state'] = methods['UNKNOWN']
     return _nodes
 
 
 def getKodiState(_node):
     if _node['type'] != 'kodi':
-        return
-    max = 10
+        return methods['UNKNOWN']
+    max = 5
     count = 1
     resp = None
     while count < max:
@@ -67,11 +77,11 @@ def getKodiState(_node):
             k = Kodi(_node['ip'])
             resp = k.JSONRPC.Version()
             print(resp)
-            return 'ON'
+            return methods['ON']
         except Exception as e:
             sleep(1)
             count += 1
-    return 'OFF'
+    return methods['OFF']
 
 
 def stopKodi(_node):
@@ -101,7 +111,9 @@ def do_devices():
     
     nickname = current_user.nickname
     devices = td.list_devices()
+    print('devices refreshed')
     nodes = update_nodes(nodes, devices)
+    print('node refreshed')
     return render_template('index.html', nodes=nodes, states=states, nickname=nickname)
 
 
@@ -110,15 +122,14 @@ def refresh(msg):
     global nodes
     global devices
     global states
-    
+
+    print('refreshing')
     devices = td.list_devices()
     
     # update page objects in function of states
     # refresh node's states in function of devices states
     nodes = update_nodes(nodes, devices)
-    # print(devices)
-    # print(nodes)
-    # print associate the related icons
+
     for n in nodes:
         if n['state'] == 0:
             n['img'] = url_for('static', filename='unknown' + '.png')
@@ -131,12 +142,14 @@ def refresh(msg):
             'pict': n['img'],
             'alt': n['name']
         })
+        emit('reactivateImg', {'alt': n['name']})
 
 
 @socketio.on('clickEvent')
 def imgclick(msg):
     global td
-    
+
+    print('click on %s' % msg['name'])
     n = nodes[indexes[msg['name']]]
     
     if n['state'] == methods['OFF']:
@@ -147,6 +160,8 @@ def imgclick(msg):
             n['state'] = methods['BOOT']
             n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
             emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
+            n['state'] = getKodiState(n)
+            print('kodi state: %s' % states[n['state']])
         elif n['type'] == 'rpi':
             pass
         elif n['type'] == 'nas':
@@ -155,8 +170,8 @@ def imgclick(msg):
             pass
         else:
             pass
-    
-    
+
+
     else:
         if n['type'] == 'kodi':
             print('Shutting down Kodi')
@@ -177,6 +192,7 @@ def imgclick(msg):
     
     n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
     emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
+    emit('reactivateImg', {'alt': n['name']})
 
 
 @app.route('/webcams')
