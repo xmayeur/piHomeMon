@@ -53,3 +53,46 @@ img.active:hover {
     text-align: center;
     line-height: 1.6em;
 }
+
+#slider {
+  width: 160px;
+  left: 0px;
+  position: relative;
+  margin: 10px auto;
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  border: 0;
+  height: 10px;
+  background: #959799;
+  outline: none;
+}
+
+#slider .ui-slider-handle {
+  position: absolute;
+  margin: -12px 0 0 0;
+  -webkit-border-radius: 100%;
+  border-radius: 100%;
+  background: #007aff;
+  color: white;
+  border: 0;
+  height: 25px;
+  width: 25px;
+  outline: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#slider .ui-slider-handle:hover,
+#slider .ui-slider-handle:focus {
+  -webkit-transform: scale(1.1);
+  -moz-transform: scale(1.1);
+  -o-transform: scale(1.1);
+  -ms-transform: scale(1.1);
+  transform: scale(1.1);
+  background: blue;
+}
+
+#slider .ui-slider-range { background: #007aff; }

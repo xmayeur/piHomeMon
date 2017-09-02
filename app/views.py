@@ -51,7 +51,10 @@ def update_nodes(_nodes):
             _state, _val = td.get_device_state(n['device'])
             n['state'] = methods[_state]
             try:
-                n['value'] = str(int(int(_val) * 100 / 256))
+                value = int(int(_val) * 100 / 256)
+                value = 0 if value < 5 else 100 if value > 95 else value
+    
+                n['value'] = str(value)
                 if n['state'] == methods['ON']:
                     n['value'] = '100'
             except:
@@ -206,6 +209,7 @@ def getDimmer(msg):
         return
     getDimmer.busy = True
     value = int(int(msg['value']) * 256 / 100)
+    value = 0 if value < 5 else 100 if value > 95 else value
     print('%s - set to value %s' % (msg['name'], msg['value']))
     
     if value == 0:

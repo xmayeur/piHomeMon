@@ -45,6 +45,9 @@ $(document).ready(function () {
 
             $( "#slider" ).slider({
 
+            range: "min",
+            max: 100,
+
             create: function(event, ui) {
                 // expected to have a hidden <input> tag with the initial value
                 $(this).slider("value", $("#sliderVal").val() );
