@@ -13,6 +13,11 @@
             <img class="active" src="{{ url_for('static', filename = 'unknown.png')}}"
                  alt="{{ n['name'] }}"
                  style="width:70px; display: inline;">
+            {% elif n['type'] == 'dim' %}
+            <input id="sliderVal" type="hidden" value="{{ n['value'] }}">
+            <div id="slider" class="active">
+                <div id="sliderHandle" class="ui-slider-handle"></div>
+            </div>
             {% else %}
             <img class="active" src="{{ url_for('static', filename = n['type']+states[n['state']]+'.png')}}"
                  alt="{{ n['name'] }}"

@@ -1,23 +1,27 @@
-from time import sleep
+# -*- coding: utf-8 -*-
 
 from flask import render_template, redirect, url_for
 from flask_security import login_required, logout_user, current_user
 from flask_socketio import emit
-# import fabric
-from kodipydent import Kodi
 
+# import fabric
 import config
-from app import app, tdtool, socketio
+from app import app, tdtool, socketio, ndtool
 
 nodes = [
-    {'id': 1, 'name': 'Média chambre', 'ip': '192.168.0.20', 'state': 0, 'type': 'kodi', 'device': '199137', 'img': ''},
-    {'id': 2, 'name': 'Média salon', 'ip': '192.168.0.13', 'state': 0, 'type': 'kodi', 'device': '274164', 'img': ''},
-    {'id': 3, 'name': 'Monitoring', 'ip': '192.168.0.12', 'state': 0, 'type': 'rpi', 'device': '', 'img': ''},
-    {'id': 4, 'name': 'NAS', 'ip': '192.168.0.16', 'state': 0, 'type': 'nas', 'device': '274165', 'img': ''},
-    {'id': 5, 'name': 'Webcam 1er', 'ip': '192.168.0.11', 'state': 0, 'type': 'rpi', 'device': '', 'img': ''},
-    {'id': 8, 'name': 'bigTower', 'ip': '192.168.0.10', 'state': 0, 'type': 'win', 'device': '', 'img': ''},
-    {'id': 6, 'name': 'TV', 'ip': '', 'state': 0, 'type': 'sw', 'device': '274166', 'img': ''},
-    {'id': 7, 'name': 'Eclairage SaM', 'ip': '', 'state': 0, 'type': 'sw', 'device': '223659', 'img': ''}
+    {'id': 1, 'name': 'Média chambre', 'ip': '192.168.0.20', 'state': 0, 'value': 0, 'type': 'kodi', 'device': '199137',
+     'img': ''},
+    {'id': 2, 'name': 'Média salon', 'ip': '192.168.0.13', 'state': 0, 'value': 0, 'type': 'kodi', 'device': '274164',
+     'img': ''},
+    {'id': 3, 'name': 'Monitoring', 'ip': '192.168.0.12', 'state': 0, 'value': 0, 'type': 'rpi', 'device': '',
+     'img': ''},
+    {'id': 4, 'name': 'NAS', 'ip': '192.168.0.16', 'state': 0, 'value': 0, 'type': 'nas', 'device': '274165',
+     'img': ''},
+    {'id': 5, 'name': 'Webcam 1er', 'ip': '192.168.0.11', 'state': 0, 'value': 0, 'type': 'rpi', 'device': '',
+     'img': ''},
+    {'id': 8, 'name': 'bigTower', 'ip': '192.168.0.10', 'state': 0, 'value': 0, 'type': 'win', 'device': '', 'img': ''},
+    {'id': 6, 'name': 'TV', 'ip': '', 'state': 0, 'value': 0, 'type': 'sw', 'device': '274166', 'img': ''},
+    {'id': 7, 'name': 'Lampe SaM', 'ip': '', 'state': 0, 'value': 0, 'type': 'dim', 'device': '223659', 'img': ''}
 ]
 
 indexes = {}
@@ -31,6 +35,7 @@ td = tdtool.Telldus(config.tokens)
 devices = td.list_devices()
 methods = td.methods
 states = td.states
+
 # enhance methods & states for nodes
 methods['BOOT'] = 512
 methods['SHUT'] = 1024
@@ -40,60 +45,43 @@ states[512] = 'BOOT'
 states[1024] = 'SHUT'
 
 
-def update_nodes(_nodes, _devices):
+def update_nodes(_nodes):
     for n in _nodes:
         if n['device'] != '':
-            for d in _devices:
-                if n['device'] == d['id']:
-                    if d['state'] == tdtool.TELLSTICK_TURNOFF:
-                        n['state'] = d['state']
-                    else:
-                        # need more details of node state - need to probe node according to type
-                        if n['type'] == 'kodi':
-                            n['state'] = getKodiState(n)
-                            if n['state'] == methods['OFF']:
-                                # kodi seems off but device is on
-                                n['state'] = methods['UNKNOWN']
-                        else:
-                            n['state'] = d['state']
-                    break
+            _state, _val = td.get_device_state(n['device'])
+            n['state'] = methods[_state]
+            try:
+                n['value'] = str(int(int(_val) * 100 / 256))
+                if n['state'] == methods['ON']:
+                    n['value'] = '100'
+            except:
+                n['value'] = 0 if n['state'] == methods['OFF'] else '100'
+                n['state'] = methods['DIM']
+            print('device %s is %s - val %s' % (n['device'], n['state'], _val))
+
         else:
-            # need more details of node state - need to probe node according to type
+            # if no device is associated with the node, we have a always 'ON' state
+            n['state'] = methods['ON']
+
+        if n['state'] != methods['OFF']:
+            if n['state'] == methods['BOOT'] or n['state'] == methods['SHUT']:
+                continue
+    
+            elif n['type'] == 'kodi' or n['type'] == 'rpi' or n['type'] == 'nas':
+                n['state'] = methods['ON'] if ndtool.isLinuxUp(n['ip']) else methods['UNKNOWN']
+    
+            elif n['type'] == 'win':
+                n['state'] = methods['ON'] if ndtool.isWinUp(n['ip']) else methods['UNKNOWN']
+    
             if n['type'] == 'kodi':
-                n['state'] = getKodiState(n)
+                n['state'] = methods['ON'] if ndtool.isKodiUp(n['ip']) else methods['UNKNOWN']
+    
+            if n['state'] == methods['UNKNOWN'] and n['device'] == '':
+                n['img'] = url_for('static', filename='unknown' + '.png')
             else:
-                n['state'] = methods['UNKNOWN']
+                n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
+            print('node %s is %s' % (n['name'], n['state']))
     return _nodes
-
-
-def getKodiState(_node):
-    if _node['type'] != 'kodi':
-        return methods['UNKNOWN']
-    max = 5
-    count = 1
-    resp = None
-    while count < max:
-        try:
-            k = Kodi(_node['ip'])
-            resp = k.JSONRPC.Version()
-            print(resp)
-            return methods['ON']
-        except Exception as e:
-            sleep(1)
-            count += 1
-    return methods['OFF']
-
-
-def stopKodi(_node):
-    if _node['type'] != 'kodi':
-        return
-    try:
-        k = Kodi(_node['ip'])
-        resp = k.System.Shutdown()
-        sleep(15)
-        return 'OFF'
-    except:
-        return 'UNKNOWN'
 
 
 @app.route('/')
@@ -110,10 +98,10 @@ def do_devices():
     global devices
     
     nickname = current_user.nickname
-    devices = td.list_devices()
-    print('devices refreshed')
-    nodes = update_nodes(nodes, devices)
-    print('node refreshed')
+    # devices = td.list_devices()
+    # print('devices refreshed')
+    nodes = update_nodes(nodes)
+    print('nodes refreshed')
     return render_template('index.html', nodes=nodes, states=states, nickname=nickname)
 
 
@@ -123,18 +111,18 @@ def refresh(msg):
     global devices
     global states
 
-    print('refreshing')
-    devices = td.list_devices()
-    
+    # devices = td.list_devices()
     # update page objects in function of states
     # refresh node's states in function of devices states
-    nodes = update_nodes(nodes, devices)
-
+    nodes = update_nodes(nodes)
+    
     for n in nodes:
         if n['state'] == 0:
             n['img'] = url_for('static', filename='unknown' + '.png')
         elif n['state'] == methods['BOOT'] or n['state'] == methods['SHUT']:
             continue
+        elif n['state'] == methods['DIM']:
+            emit('setSlider', {'value': n['value']})
         else:
             n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
         
@@ -153,24 +141,26 @@ def imgclick(msg):
     n = nodes[indexes[msg['name']]]
     
     if n['state'] == methods['OFF']:
-        td.do_method(n['device'], methods['ON'])
-        n['state'] = methods['ON']
+        if n['device'] != '':
+            td.do_method(n['device'], methods['ON'])
+            n['state'] = methods['ON']
         if n['type'] == 'kodi':
             print('Booting up Kodi')
             n['state'] = methods['BOOT']
             n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
             emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
-            n['state'] = getKodiState(n)
+            n['state'] = methods['ON'] if ndtool.isKodiUp(n['ip']) else methods['OFF']
             print('kodi state: %s' % states[n['state']])
         elif n['type'] == 'rpi':
-            pass
+            n['state'] = methods['ON'] if ndtool.isLinuxUp(n['ip']) else methods['OFF']
+            n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
+            emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
         elif n['type'] == 'nas':
             pass
         elif n['type'] == "win":
             pass
         else:
             pass
-
 
     else:
         if n['type'] == 'kodi':
@@ -178,22 +168,56 @@ def imgclick(msg):
             n['state'] = methods['SHUT']
             n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
             emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
-            stopKodi(n)
+            ndtool.stopKodi(n['ip'])
         elif n['type'] == 'rpi':
-            pass
+            n['state'] = methods['ON'] if ndtool.isLinuxUp(n['ip']) else methods['OFF']
+            n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
+            emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
         elif n['type'] == 'nas':
-            pass
+            # send a shutdown action and wait for 5 min
+            emit('reactivateImg', {'alt': n['name']})
+            return
         elif n['type'] == "win":
             pass
         else:
             pass
-        td.do_method(n['device'], methods['OFF'])
-        n['state'] = methods['OFF']
+        if n['device'] != '':
+            td.do_method(n['device'], methods['OFF'])
+            n['state'] = methods['OFF']
     
     n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
     emit('refreshResponse', {'pict': n['img'], 'alt': n['name']})
     emit('reactivateImg', {'alt': n['name']})
 
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    
+    return decorate
+
+
+@static_vars(busy=False)
+@socketio.on('getSlider')
+def getDimmer(msg):
+    if getDimmer.busy:
+        return
+    getDimmer.busy = True
+    value = int(int(msg['value']) * 256 / 100)
+    print('%s - set to value %s' % (msg['name'], msg['value']))
+    
+    if value == 0:
+        td.do_method(n['device'], methods['OFF'])
+    elif value == 256:
+        td.do_method(n['device'], methods['ON'])
+    else:
+        td.do_method(n['device'], methods['DIM'], value)
+    
+    getDimmer.busy = False
+    
+    
 
 @app.route('/webcams')
 @login_required

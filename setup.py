@@ -9,6 +9,7 @@ setup(
     author='X. Mayeur',
     author_email='xavier@mayeur.be',
     description='Home device monitoring server',
-    requires=['flask', 'flask_security', 'flask_socketio', 'fabric3', 'kodipydent']
+    requires=['flask', 'flask_security', 'flask_socketio', 'fabric3', 'kodipydent',
+              'gevent', 'oauth2', 'flask_sqlalchemy']
 
 )

@@ -66,8 +66,9 @@ class Telldus:
         conn = http.client.HTTPConnection("api.telldus.com:80")
         conn.request('GET', "/json/" + method + "?" + urllib.parse.urlencode(params, True).replace('+', '%20'),
                      headers=headers)
-        response = conn.getresponse()
-        return json.load(response)
+        response = conn.getresponse().read().decode()
+
+        return json.loads(response)
     
     def list_devices(self):
         response = self.do_request('devices/list', {'supportedMethods': SUPPORTED_METHODS})
@@ -81,7 +82,7 @@ class Telldus:
         if val in self.states:
             state = self.states[val]
         else:
-            state = 'Unknown state'
+            state = 'UNKNOWN'
         return state, val2
     
     def do_method(self, deviceId, methodId, methodValue=0):
@@ -225,7 +226,14 @@ def printUsage():
 
 
 def main(argv):
-    td = Telldus()
+    tokens = {
+        'private_key': 'a',
+        'public_key': 'b',
+        'token': 'c',
+        'token_secret': 'd'
+    }
+    
+    td = Telldus(tokens)
     
     try:
         opts, args = getopt.getopt(argv, "ln:f:d:b:v:h",

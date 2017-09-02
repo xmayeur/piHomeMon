@@ -17,10 +17,14 @@
 
 }
 
-img.busy:hover {
-  border: 3px solid red;
+img.busy: {
+  border: 3px dashed red;
 }
-img {
+
+img.busy:hover {
+  border: 3px dashed red;
+}
+img.active {
   border: 3px solid white;
 }
 
@@ -37,6 +41,15 @@ img.active:hover {
     text-align:center;
     z-index:1234;
     overflow: auto;
-    width: 100px; /* width of the spinner gif */
-    height: 102px; /*hight of the spinner gif +2px to fix IE8 issue */
+    width: 200px; /* width of the spinner gif */
+    height: 202px; /*height of the spinner gif +2px to fix IE8 issue */
+}
+
+#sliderHandle {
+    width: 3em;
+    height: 1.6em;
+    top: 50%;
+    margin-top: -.8em;
+    text-align: center;
+    line-height: 1.6em;
 }

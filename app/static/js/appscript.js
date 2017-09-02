@@ -24,11 +24,50 @@ $(document).ready(function () {
 
         });
 
-        // re-activate clickable icon
+        // re-activate a clickable icon
         socket.on('reactivateImg', function(msg) {
             $('img[alt="'+msg.alt+'"]').removeClass('busy').addClass('active');
             $("#spinner").hide();
         });
 
         // spinner show/hide here
+        socket.on('spinnerShow', function() {
+            $("#spinner").show();
+        });
+        socket.on('spinnerHide', function() {
+            $("#spinner").hide();
+        });
+
+        // slider function
+        $( function() {
+            var handle = $( "#sliderHandle" );
+
+
+            $( "#slider" ).slider({
+
+            create: function(event, ui) {
+                // expected to have a hidden <input> tag with the initial value
+                $(this).slider("value", $("#sliderVal").val() );
+                handle.text( $( this ).slider( "value" ));
+                },
+
+            slide: function(event, ui) {
+                socket.emit('getSlider', {
+                    value: ui.value,
+                    name: $(this).closest('h3').text()
+                    })
+                handle.text( ui.value );
+
+                }
+            });
+
+            // set slider value
+            socket.on('setSlider', function(msg){
+                $( "#slider" ).slider("value", msg.value);
+                handle.text( msg.value );
+            });
+
+        });
+
 });
+
