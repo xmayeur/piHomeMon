@@ -7,7 +7,6 @@ https://pythonhosted.org/Flask-Security/quickstart.html
 """
 from flask import Flask
 from flask_socketio import SocketIO
-from flask_sqlalchemy import SQLAlchemy
 
 # Create app
 app = Flask(__name__)
@@ -15,5 +14,5 @@ app.config.from_object('config')
 socketio = SocketIO(app, async_mode="gevent")
 
 # Create database connection object
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
 from app import views

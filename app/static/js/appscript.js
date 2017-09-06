@@ -47,6 +47,7 @@ $(document).ready(function () {
 
             range: "min",
             max: 100,
+            step: 10,
 
             create: function(event, ui) {
                 // expected to have a hidden <input> tag with the initial value

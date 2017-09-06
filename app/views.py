@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from flask import render_template, redirect, url_for
-from flask_security import login_required, logout_user, current_user
+# from flask_security import login_required, logout_user, current_user
 from flask_socketio import emit
 
 # import fabric
 import config
 from app import app, tdtool, socketio, ndtool
+
+# from flask_login import LoginManager
 
 nodes = [
     {'id': 1, 'name': 'Média chambre', 'ip': '192.168.0.20', 'state': 0, 'value': 0, 'type': 'kodi', 'device': '199137',
@@ -60,7 +62,7 @@ def update_nodes(_nodes):
             except:
                 n['value'] = 0 if n['state'] == methods['OFF'] else '100'
                 n['state'] = methods['DIM']
-            print('device %s is %s - val %s' % (n['device'], n['state'], _val))
+                # print('device %s is %s - val %s' % (n['device'], n['state'], _val))
 
         else:
             # if no device is associated with the node, we have a always 'ON' state
@@ -83,28 +85,27 @@ def update_nodes(_nodes):
                 n['img'] = url_for('static', filename='unknown' + '.png')
             else:
                 n['img'] = url_for('static', filename=n['type'] + states[n['state']] + '.png')
-            print('node %s is %s' % (n['name'], n['state']))
+                # print('node %s is %s' % (n['name'], n['state']))
     return _nodes
 
 
 @app.route('/')
-@login_required
+# @login_required
 def home():
     return redirect(url_for('do_devices'))
 
 
 @app.route('/devices')
-@login_required
+# @login_required
 def do_devices():
     global nodes
     global states
     global devices
-    
-    nickname = current_user.nickname
-    # devices = td.list_devices()
-    # print('devices refreshed')
+
+    # nickname = current_user.nickname
+    nickname = 'Xavier'
     nodes = update_nodes(nodes)
-    print('nodes refreshed')
+    # print('nodes refreshed')
     return render_template('index.html', nodes=nodes, states=states, nickname=nickname)
 
 
@@ -221,22 +222,22 @@ def getDimmer(msg):
     
     getDimmer.busy = False
     
-    
 
 @app.route('/webcams')
-@login_required
+# @login_required
 def webcams():
     return render_template('index.html')
 
 
 @app.route('/logout')
 def logout():
-    if current_user.is_authenticated:
-        nickname = current_user.nickname
-        logout_user()
-        return 'Bye ' + nickname + '!'
-    else:
-        return 'Bye!'
+    # if current_user.is_authenticated:
+    #     nickname = current_user.nickname
+    #     logout_user()
+    #     return 'Bye ' + nickname + '!'
+    # else:
+    #     return 'Bye!'
+    return 'Bye'
 
 
 """
